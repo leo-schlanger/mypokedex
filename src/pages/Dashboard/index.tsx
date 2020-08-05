@@ -5,7 +5,8 @@ import {useNavigation} from '@react-navigation/native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {Form} from '@unform/mobile';
 import {FormHandles} from '@unform/core';
-import {Alert, View, Text} from 'react-native';
+import {Alert, View, Text, ActivityIndicator} from 'react-native';
+import ImagePicker from 'react-native-image-picker';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import {useAuth} from '../../hooks/auth';
@@ -37,10 +38,12 @@ export interface Pokemon {
   sprites?: {
     front_default: string;
   };
+  avatar_url?: string;
 }
 
 const Dashboard: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
   const [find, setFind] = useState<Pokemon>();
   const {user} = useAuth();
@@ -57,10 +60,12 @@ const Dashboard: React.FC = () => {
           list.push({
             id: item.val().id as number,
             name: item.val().name as string,
+            avatar_url: item.val().avatar_url as string,
           });
         });
 
         setPokemons(list);
+        setLoading(false);
       });
   }, [user]);
 
@@ -69,15 +74,15 @@ const Dashboard: React.FC = () => {
   }, [navigate]);
 
   const navigateToPokemonInfo = useCallback(
-    (PokemonId: string) => {
-      navigate('PokemonInfo', {PokemonId});
+    (pokemonId: string, picture: string) => {
+      navigate('PokemonInfo', {pokemonId, picture});
     },
     [navigate],
   );
 
   const handleFindPokemon = useCallback(async (data: {find: string}) => {
     try {
-      const response = await pokedex.get(`pokemon/${data.find}`);
+      const response = await pokedex.get(`pokemon/${data.find.toLowerCase()}`);
 
       setFind(response.data);
     } catch (err) {
@@ -92,18 +97,37 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      firebase
-        .database()
-        .ref(`pokemons/${user.id}`)
-        .child(`${find.id}`)
-        .set({
-          id: find.id,
-          name: find.name,
-        })
-        .then(() => {
-          Alert.alert('Pokemon registrado com sucesso!');
-          setFind(undefined);
-        });
+      ImagePicker.showImagePicker(
+        {
+          title: 'Selecione um avatar',
+          cancelButtonTitle: 'Cancelar',
+          takePhotoButtonTitle: 'Usar Câmera',
+          chooseFromLibraryButtonTitle: 'Escolher da galeria',
+        },
+        (response) => {
+          if (response.didCancel) {
+            return;
+          }
+
+          if (response.error) {
+            Alert.alert('Erro ao atualizar seu avatar.', `${response.error}`);
+          }
+
+          firebase
+            .database()
+            .ref(`pokemons/${user.id}`)
+            .child(`${find.id}`)
+            .set({
+              id: find.id,
+              name: find.name,
+              avatar_url: response.uri,
+            })
+            .then(() => {
+              Alert.alert('Pokemon registrado com sucesso!');
+              setFind(undefined);
+            });
+        },
+      );
     } catch (err) {
       Alert.alert('Erro na adição do pokemon, tente novamente');
     }
@@ -126,6 +150,18 @@ const Dashboard: React.FC = () => {
     },
     [user],
   );
+
+  if (loading) {
+    return (
+      <Container>
+        <ActivityIndicator
+          size={120}
+          color="#28262e"
+          style={{alignSelf: 'center', marginTop: 240}}
+        />
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -185,8 +221,10 @@ const Dashboard: React.FC = () => {
         keyExtractor={(pokemon) => `${pokemon.id}`}
         ListHeaderComponent={<PokemonsListTitle>Minha lista</PokemonsListTitle>}
         renderItem={({item: pokemon}) => (
-          <PokemonContainer onPress={() => navigateToPokemonInfo(pokemon.name)}>
-            {/* <PokemonAvatar source={{uri: Pokemon.avatar_url}} /> */}
+          <PokemonContainer
+            onPress={() =>
+              navigateToPokemonInfo(pokemon.name, pokemon.avatar_url)}>
+            <PokemonAvatar source={{uri: pokemon?.avatar_url}} />
 
             <PokemonInfo>
               <PokemonName>{pokemon.name}</PokemonName>

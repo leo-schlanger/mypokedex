@@ -19,12 +19,14 @@ import {
   SectionContent,
   SectionContentVertical,
   PokemonInfoText,
+  PokemonPicture,
 } from './styles';
 
 import pokedex from '../../services/pokedex';
 
 interface RouteParams {
-  PokemonId: string;
+  pokemonId: string;
+  picture: string;
 }
 
 export interface Pokemon {
@@ -60,10 +62,11 @@ const PokemonInfo: React.FC = () => {
   const routeParams = route.params as RouteParams;
 
   const [pokemon, setPokemon] = useState<Pokemon>();
+  const [picture, setPicture] = useState<string>();
   const [evolutions, setEvolutions] = useState<string[]>([]);
 
   useEffect(() => {
-    pokedex.get(`pokemon/${routeParams.PokemonId}`).then(async (response) => {
+    pokedex.get(`pokemon/${routeParams.pokemonId}`).then(async (response) => {
       const speciesDetails = await pokedex.get(
         `pokemon-species/${response.data.name}/`,
       );
@@ -75,6 +78,7 @@ const PokemonInfo: React.FC = () => {
       );
 
       setEvolutions(listEvolutions);
+      setPicture(routeParams.picture);
       setPokemon(response.data);
     });
   }, [routeParams]);
@@ -95,7 +99,7 @@ const PokemonInfo: React.FC = () => {
         <Content>
           <ActivityIndicator
             size={120}
-            color="#02a9a6"
+            color="#28262e"
             style={{alignSelf: 'center', marginTop: 240}}
           />
         </Content>
@@ -116,6 +120,7 @@ const PokemonInfo: React.FC = () => {
       </Header>
 
       <Content>
+        {picture && <PokemonPicture source={{uri: picture}} />}
         <Section>
           <SectionTitle>Informações Básicas:</SectionTitle>
 

@@ -33,6 +33,14 @@ export const PokemonAvatar = styled.Image`
   margin-left: auto;
 `;
 
+export const PokemonPicture = styled.Image`
+  width: 128px;
+  height: 128px;
+  margin: 12px;
+  border-radius: 64px;
+  align-self: center;
+`;
+
 export const OpenDatePickerButtonText = styled.Text`
   font-family: 'VT323-Medium';
   font-size: 16px;

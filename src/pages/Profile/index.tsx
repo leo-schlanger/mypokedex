@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-// import ImagePicker from 'react-native-image-picker';
+import ImagePicker from 'react-native-image-picker';
 import {useNavigation} from '@react-navigation/native';
 import {Form} from '@unform/mobile';
 import {FormHandles} from '@unform/core';
@@ -112,38 +112,29 @@ const Profile: React.FC = () => {
     [navigation, updateUser, user],
   );
 
-  // const handleUpdateAvatar = useCallback(() => {
-  //   ImagePicker.showImagePicker(
-  //     {
-  //       title: 'Selecione um avatar',
-  //       cancelButtonTitle: 'Cancelar',
-  //       takePhotoButtonTitle: 'Usar Câmera',
-  //       chooseFromLibraryButtonTitle: 'Escolher da galeria',
-  //     },
-  //     (response) => {
-  //       if (response.didCancel) {
-  //         return;
-  //       }
+  const handleUpdateAvatar = useCallback(() => {
+    ImagePicker.showImagePicker(
+      {
+        title: 'Selecione um avatar',
+        cancelButtonTitle: 'Cancelar',
+        takePhotoButtonTitle: 'Usar Câmera',
+        chooseFromLibraryButtonTitle: 'Escolher da galeria',
+      },
+      (response) => {
+        if (response.didCancel) {
+          return;
+        }
 
-  //       if (response.error) {
-  //         Alert.alert('Erro ao atualizar seu avatar.');
-  //         return;
-  //       }
+        if (response.error) {
+          Alert.alert('Erro ao atualizar seu avatar.', `${response.error}`);
+        }
 
-  //       const data = new FormData();
+        const newUser = Object.assign(user, {avatar_url: response.uri});
 
-  //       data.append('avatar', {
-  //         type: 'image/jpg',
-  //         name: `${user.id}.jpg`,
-  //         uri: response.uri,
-  //       });
-
-  //       api.patch('user/avatar', data).then((apiResponse) => {
-  //         updateUser(apiResponse.data);
-  //       });
-  //     },
-  //   );
-  // }, [user.id, updateUser]);
+        updateUser(newUser);
+      },
+    );
+  }, [updateUser, user]);
 
   const handleGoBack = useCallback(() => {
     navigation.goBack();
@@ -170,7 +161,7 @@ const Profile: React.FC = () => {
               </LogOutButton>
             </Header>
 
-            <UserAvatarButton onPress={() => {}}>
+            <UserAvatarButton onPress={handleUpdateAvatar}>
               {user.avatar_url && user.avatar_url !== '' ? (
                 <UserAvatar source={{uri: user.avatar_url}} />
               ) : (
@@ -196,6 +187,7 @@ const Profile: React.FC = () => {
               <Input
                 ref={emailInputRef}
                 keyboardType="email-address"
+                editable={false}
                 autoCorrect={false}
                 autoCapitalize="none"
                 name="email"
