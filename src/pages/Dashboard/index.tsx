@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import React, {useCallback, useState, useEffect, useRef} from 'react';
 
 import Icon from 'react-native-vector-icons/Feather';
@@ -223,7 +224,7 @@ const Dashboard: React.FC = () => {
         renderItem={({item: pokemon}) => (
           <PokemonContainer
             onPress={() =>
-              navigateToPokemonInfo(pokemon.name, pokemon.avatar_url)}>
+              navigateToPokemonInfo(pokemon.name, pokemon.avatar_url || '')}>
             <PokemonAvatar source={{uri: pokemon?.avatar_url}} />
 
             <PokemonInfo>
